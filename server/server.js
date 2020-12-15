@@ -1,7 +1,7 @@
 //load lib
 const express = require('express')
 const morgan = require('morgan')
-const e = require('express')
+const cors = require('cors')
 
 //import the mongo driver
 const MongoClient = require('mongodb').MongoClient
@@ -19,19 +19,17 @@ const mongoClient = new MongoClient(MONGO_URL,
     { useNewUrlParser: true, useUnifiedTopology: true }
 )
 
-
-
 //config port
 const PORT = parseInt(process.argv[2]) || parseInt(process.env.PORT) || 3000
 
 //instantiate express
 const app = express()
 
+app.use(cors())
 app.use(morgan('combined'))
 
 //GET/ countries (a list of all the sorted countries from the db)
 app.get('/countries', async (req, res) => {
-    const countries = req.params['countries']
 
     try {
         const result = await mongoClient.db('winemag')
@@ -54,7 +52,7 @@ app.get('/countries', async (req, res) => {
 
 //GET/country/county
 app.get('/country/:country', async (req, res) => {
-    const county = req.params['country']
+    const country = req.params['country']
 
     try {
         const result = await mongoClient.db('winemag')
@@ -80,6 +78,30 @@ app.get('/country/:country', async (req, res) => {
         res.json({ error: e })
     }
 })
+
+app.get('/wine/:id', async (req, res) => {
+    const wine = req.params['wine']
+    try {
+        const result = await mondoClient.db('winemag')
+        .collection('wine')
+        .find({
+            _id:{
+                $regex: 'variety',
+                $options: 'i'
+            }
+        })
+        
+
+    } catch(e) {
+        res.status(500)
+        res.type('application/json')
+        res.json({error: e})
+    }
+})
+
+//after build --prod to serve angular inside express
+//copy the file inside the dist folder & paste into the backend's main file
+app.use(express.static('./client'))
 
 //start server
 mongoClient.connect()
